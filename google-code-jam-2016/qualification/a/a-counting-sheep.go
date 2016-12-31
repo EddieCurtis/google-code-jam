@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-const input string = "a-counting-sheep.input"
+const input string = "A-large-practice.in"
 
 func main() {
 	data, err := ioutil.ReadFile(input)
