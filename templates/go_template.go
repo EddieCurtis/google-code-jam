@@ -24,7 +24,7 @@ func main() {
 	}
 }
 
-func processLine(line string) {
+func processLine(line string) string {
 	// Implement solution here
 	return ""
 }
