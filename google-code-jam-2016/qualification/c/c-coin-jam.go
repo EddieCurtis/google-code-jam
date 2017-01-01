@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math"
+	"math/big"
 	"strconv"
 	"strings"
 )
@@ -69,7 +70,14 @@ Outer:
 func findFactor(base int, c chan Ret, stop chan bool, jamcoin string) {
 	// Convert jamcoin to decimal using given base
 	num, _ := strconv.ParseInt(jamcoin, base, 64)
-	factor := firstfactor(float64(num), stop)
+	var factor float64
+	x := big.NewInt(num)
+	// Check if num is prime with a probability of 0.9
+	if x.ProbablyPrime(10) {
+		factor = 0
+	} else {
+		factor = firstfactor(float64(num), stop)
+	}
 	c <- Ret{base - 2, factor}
 }
 
