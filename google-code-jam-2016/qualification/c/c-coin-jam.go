@@ -82,7 +82,7 @@ func findFactor(base int, c chan Ret, stop chan bool, jamcoin string) {
 }
 
 func firstfactor(num float64, stop chan bool) float64 {
-	for i := 2; float64(i) < num/2; i++ {
+	for i := 2; float64(i) <= math.Sqrt(num); i++ {
 		select {
 		case <-stop:
 			fmt.Println("Stopping goroutine")
