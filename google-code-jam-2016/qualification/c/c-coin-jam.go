@@ -26,6 +26,11 @@ func main() {
 	}
 }
 
+type Ret struct {
+	Index  int
+	Factor float64
+}
+
 func processLine(line string) string {
 	// Implement solution here
 	parts := strings.Split(line, " ")
@@ -38,26 +43,48 @@ Outer:
 	for i := 0; count < limit; i++ {
 		jamcoin := jamcoin(int64(i), length)
 		var factors [10]string
+		// Channel for the return values
+		c := make(chan Ret, 9)
+		// Channel to stop processing
+		stop := make(chan bool, 1)
 		for j := 2; j < 11; j++ {
-			// Convert jamcoin to decimal using base j
-			num, _ := strconv.ParseInt(jamcoin, j, 64)
-			factor := firstfactor(float64(num))
-			if factor == 0 {
+			findFactor(j, c, stop, jamcoin)
+		}
+		for k := 0; k < 9; k++ {
+			r := <-c
+			if r.Factor < 1 {
+				stop <- true
 				continue Outer
 			}
-			factors[j-2] = strconv.FormatFloat(factor, 'f', 0, 64)
+			factors[r.Index] = strconv.FormatFloat(r.Factor, 'f', 0, 64)
 		}
+		close(c)
+		close(stop)
 		ret = ret + "\n" + jamcoin + " " + strings.Trim(fmt.Sprint(factors), "[]")
 		count++
 	}
 	return ret
 }
 
-func firstfactor(num float64) float64 {
+func findFactor(base int, c chan Ret, stop chan bool, jamcoin string) {
+	// Convert jamcoin to decimal using given base
+	num, _ := strconv.ParseInt(jamcoin, base, 64)
+	factor := firstfactor(float64(num), stop)
+	c <- Ret{base - 2, factor}
+}
+
+func firstfactor(num float64, stop chan bool) float64 {
 	for i := 2; float64(i) < num/2; i++ {
-		remainder := math.Remainder(num, float64(i))
-		if remainder == 0 {
-			return float64(i)
+		select {
+		case <-stop:
+			fmt.Println("Stopping goroutine")
+			// If a signal is sent to the stop channel, just return 0
+			return 0
+		default:
+			remainder := math.Remainder(num, float64(i))
+			if remainder == 0 {
+				return float64(i)
+			}
 		}
 	}
 	return 0
