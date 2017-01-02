@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"math"
 	"math/big"
 	"strconv"
 	"strings"
@@ -68,29 +67,28 @@ Outer:
 }
 
 func findFactor(base int, c chan Ret, stop chan bool, jamcoin string) {
-	// Convert jamcoin to decimal using given base
-	num, _ := strconv.ParseInt(jamcoin, base, 64)
 	var factor float64
-	x := big.NewInt(num)
+	// Use big rather than int64 because the numbers will be too large for the 32 digit exercise
+	x := new(big.Int)
+	x.SetString(jamcoin, base)
 	// Check if num is prime with a probability of 0.9
 	if x.ProbablyPrime(10) {
 		factor = 0
 	} else {
-		factor = firstfactor(float64(num), stop)
+		factor = firstfactor(x, stop)
 	}
 	c <- Ret{base - 2, factor}
 }
 
-func firstfactor(num float64, stop chan bool) float64 {
-	for i := 2; float64(i) <= math.Sqrt(num); i++ {
+func firstfactor(num *big.Int, stop chan bool) float64 {
+	for i := 2; i < 10000; i++ {
 		select {
 		case <-stop:
-			fmt.Println("Stopping goroutine")
 			// If a signal is sent to the stop channel, just return 0
 			return 0
 		default:
-			remainder := math.Remainder(num, float64(i))
-			if remainder == 0 {
+			z := new(big.Int).Set(num)
+			if z.Rem(z, big.NewInt(int64(i))).Int64() == 0 {
 				return float64(i)
 			}
 		}
